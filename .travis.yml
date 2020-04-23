@@ -1,6 +1,14 @@
 sudo: required
 services:
   - docker
+cache:
+  directories:
+  # We cache the SDK so we don't have to download it again on subsequent builds.
+  - $HOME/google-cloud-sdk
+env:
+  global:
+  # Do not prompt for user input when using any SDK methods.
+  - CLOUDSDK_CORE_DISABLE_PROMPTS=1 
 
 before_install:
   - openssl aes-256-cbc -K $encrypted_d936d495bd47_key -iv $encrypted_d936d495bd47_iv -in multi-k8s.json.enc -out multi-k8s.json -d
