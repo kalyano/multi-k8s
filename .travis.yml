@@ -3,12 +3,11 @@ services:
   - docker
 cache:
   directories:
-  # We cache the SDK so we don't have to download it again on subsequent builds.
   - $HOME/google-cloud-sdk
 env:
   global:
-  # Do not prompt for user input when using any SDK methods.
-  - CLOUDSDK_CORE_DISABLE_PROMPTS=1 
+    - SHA=$(git rev-parse HEAD)
+    - CLOUDSDK_CORE_DISABLE_PROMPTS=1 
 
 before_install:
   - openssl aes-256-cbc -K $encrypted_d936d495bd47_key -iv $encrypted_d936d495bd47_iv -in multi-k8s.json.enc -out multi-k8s.json -d
@@ -20,6 +19,16 @@ before_install:
   - gcloud components update kubectl
   - gcloud auth activate-service-account --key-file multi-k8s.json
   - gcloud config set project multi-k8s-275105
-  - gcloud set compute/zone us-central1-a
+  - gcloud config set compute/zone us-central1-a
   - gcloud container clusters get-credentials multi-cluster
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  - docker build -t kalyano/react-test -f ./client/Dockerfile-dev ./client
+
+script:
+  - docker run -e CI=true kalyano/react-test npm test
+
+deploy:
+  provider: script
+  script: bash ./deploy.sh
+  on:
+    branch: master
